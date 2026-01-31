@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, Loader2 } from "lucide-react";
+import { Send, Loader2, AlertTriangle, DollarSign, X, Database, FileText, Edit, MessageSquare } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ChatMessage, PresetPrompt, LegalClause } from "../types";
 import { LLMService } from "../services/llmService";
@@ -14,31 +14,37 @@ const PRESET_PROMPTS: PresetPrompt[] = [
     id: "1",
     label: "Summarize all major risks",
     prompt: "Summarize all the major risks in this document in simple bullet points.",
+    icon: AlertTriangle,
   },
   {
     id: "2",
     label: "Any hidden fees or automatic charges?",
     prompt: "Are there any hidden fees or automatic charges I should be aware of?",
+    icon: DollarSign,
   },
   {
     id: "3",
     label: "What are the cancellation terms?",
     prompt: "What are the cancellation terms? Will I be charged any penalties for canceling?",
+    icon: X,
   },
   {
     id: "4",
     label: "How will my data be used?",
     prompt: "How will my personal data be used and shared? Is there anything concerning?",
+    icon: Database,
   },
   {
     id: "5",
     label: "What rights am I giving up?",
     prompt: "What legal rights am I giving up by agreeing to this document?",
+    icon: FileText,
   },
   {
     id: "6",
     label: "Can this agreement be changed?",
     prompt: "Can the company change these terms without my consent? What happens if they do?",
+    icon: Edit,
   },
 ];
 
@@ -139,7 +145,7 @@ export function Chat({ llmService, clauses }: ChatProps) {
                 color: "#171717",
               }}
             >
-              <Sparkles size={16} />
+              <MessageSquare size={16} />
               <span style={{ fontSize: "13px", fontWeight: 500 }}>
                 Ask me anything about this document
               </span>
@@ -151,33 +157,40 @@ export function Chat({ llmService, clauses }: ChatProps) {
                 gap: "8px",
               }}
             >
-              {PRESET_PROMPTS.map((preset) => (
-                <button
-                  key={preset.id}
-                  onClick={() => handlePresetClick(preset)}
-                  style={{
-                    padding: "12px 16px",
-                    backgroundColor: "#ffffff",
-                    border: "1px solid #e5e5e5",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                    color: "#404040",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    transition: "all 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#f5f5f5";
-                    e.currentTarget.style.borderColor = "#d4d4d4";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#ffffff";
-                    e.currentTarget.style.borderColor = "#e5e5e5";
-                  }}
-                >
-                  {preset.label}
-                </button>
-              ))}
+              {PRESET_PROMPTS.map((preset) => {
+                const IconComponent = preset.icon;
+                return (
+                  <button
+                    key={preset.id}
+                    onClick={() => handlePresetClick(preset)}
+                    style={{
+                      padding: "12px 16px",
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #e5e5e5",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                      color: "#404040",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.15s",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#f5f5f5";
+                      e.currentTarget.style.borderColor = "#d4d4d4";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#ffffff";
+                      e.currentTarget.style.borderColor = "#e5e5e5";
+                    }}
+                  >
+                    <IconComponent size={16} style={{ flexShrink: 0 }} />
+                    <span>{preset.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

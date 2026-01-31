@@ -114,4 +114,5 @@ export interface PresetPrompt {
   id: string;
   label: string;
   prompt: string;
+  icon: any;
 }
