@@ -161,12 +161,12 @@ export function ClauseGuardUI() {
           height: "56px",
           borderRadius: "50%",
           backgroundColor: "#171717",
-          border: "none",
+          border: "2px solid #262626",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.1)",
           zIndex: 2147483647,
           animation: "fadeIn 0.3s ease-out",
           padding: 0,
@@ -191,12 +191,12 @@ export function ClauseGuardUI() {
           height: "56px",
           borderRadius: "50%",
           backgroundColor: "#171717",
-          border: "none",
+          border: "2px solid #262626",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.1)",
           zIndex: 2147483647,
           animation: "fadeIn 0.3s ease-out",
           padding: 0,
@@ -210,32 +210,46 @@ export function ClauseGuardUI() {
   }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: "24px",
-        right: "24px",
-        width: "420px",
-        height: "calc(100vh - 48px)",
-        maxHeight: "720px",
-        backgroundColor: "#ffffff",
-        border: "1px solid #e5e5e5",
-        borderRadius: "12px",
-        boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-        zIndex: 2147483647,
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        animation: "slideInFromRight 0.3s ease-out",
-        margin: 0,
-        padding: 0,
-        fontSize: "14px",
-        lineHeight: 1.5,
-        color: "#171717",
-        textAlign: "left",
-      }}
-    >
+    <>
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.15)",
+          zIndex: 2147483646,
+          animation: "fadeIn 0.2s ease-out",
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          width: "420px",
+          height: "calc(100vh - 48px)",
+          maxHeight: "720px",
+          backgroundColor: "#ffffff",
+          border: "2px solid #262626",
+          borderRadius: "12px",
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          zIndex: 2147483647,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          animation: "slideInFromRight 0.3s ease-out",
+          margin: 0,
+          padding: 0,
+          fontSize: "14px",
+          lineHeight: 1.5,
+          color: "#171717",
+          textAlign: "left",
+        }}
+      >
       <div
         style={{
           display: "flex",
@@ -402,5 +416,6 @@ export function ClauseGuardUI() {
         )}
       </div>
     </div>
+    </>
   );
 }
