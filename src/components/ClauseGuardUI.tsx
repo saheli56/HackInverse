@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Shield, X, FileText, MessageSquare } from "lucide-react";
 import { 
   LegalClause, 
@@ -6,7 +6,6 @@ import {
   SuggestedQuestion,
   ChatMessage,
 } from "../types";
-import { VoiceInterface } from "../services/voiceInterface";
 import { LLMService } from "../services/llmService";
 import { analyzeDocument, scanPage } from "../utils/clauseDetector";
 import { getApiKeys } from "../utils/storage";
@@ -23,22 +22,17 @@ export function ClauseGuardUI() {
   const [isExplaining, setIsExplaining] = useState(false);
   const [questions, setQuestions] = useState<SuggestedQuestion[]>([]);
   const [isLoadingAnswer, setIsLoadingAnswer] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [voiceText, setVoiceText] = useState<string | null>(null);
   const [llmService, setLlmService] = useState<LLMService | null>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("analysis");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  
-  const voiceInterfaceRef = useRef<VoiceInterface | null>(null);
 
   useEffect(() => {
     const init = async () => {
       const keys = await getApiKeys();
       setLlmService(new LLMService(keys.groqApiKey, keys.geminiApiKey));
-      voiceInterfaceRef.current = new VoiceInterface();
     };
     init();
   }, []);
@@ -110,44 +104,6 @@ export function ClauseGuardUI() {
       );
     } finally {
       setIsLoadingAnswer(false);
-    }
-  };
-
-  const handleVoiceToggle = () => {
-    if (!voiceInterfaceRef.current) return;
-
-    if (isListening) {
-      voiceInterfaceRef.current.stopListening();
-      setIsListening(false);
-    } else {
-      setIsListening(true);
-      voiceInterfaceRef.current.startListening(
-        (transcript) => {
-          setVoiceText(transcript);
-          setIsListening(false);
-          handleVoiceCommand(transcript);
-        },
-        () => {
-          setIsListening(false);
-        }
-      );
-    }
-  };
-
-  const handleVoiceCommand = (text: string) => {
-    const lower = text.toLowerCase();
-    
-    if (lower.includes("scan") || lower.includes("analyze")) {
-      handleScan();
-    } else if (lower.includes("read") && analysis) {
-      const summary = analysis.takeaways.map((t) => t.text).join(". ");
-      voiceInterfaceRef.current?.speak(summary);
-    }
-  };
-
-  const handleSpeak = (text: string) => {
-    if (voiceInterfaceRef.current) {
-      voiceInterfaceRef.current.speak(text);
     }
   };
 
@@ -426,10 +382,6 @@ export function ClauseGuardUI() {
             questions={questions}
             onAskQuestion={handleAskQuestion}
             isLoadingAnswer={isLoadingAnswer}
-            isListening={isListening}
-            onVoiceToggle={handleVoiceToggle}
-            onSpeak={handleSpeak}
-            voiceText={voiceText}
           />
         ) : (
           <Chat 

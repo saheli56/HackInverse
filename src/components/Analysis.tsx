@@ -4,7 +4,6 @@ import { Header } from "./Header";
 import { KeyTakeaways } from "./KeyTakeaways";
 import { ClauseList } from "./ClauseList";
 import { SuggestedQuestions } from "./SuggestedQuestions";
-import { VoiceAssist } from "./VoiceAssist";
 
 interface AnalysisProps {
   analysis: DocumentAnalysis | null;
@@ -17,10 +16,6 @@ interface AnalysisProps {
   questions: SuggestedQuestion[];
   onAskQuestion: (question: SuggestedQuestion) => void;
   isLoadingAnswer: boolean;
-  isListening: boolean;
-  onVoiceToggle: () => void;
-  onSpeak: (text: string) => void;
-  voiceText: string | null;
 }
 
 export function Analysis({
@@ -34,10 +29,6 @@ export function Analysis({
   questions,
   onAskQuestion,
   isLoadingAnswer,
-  isListening,
-  onVoiceToggle,
-  onSpeak,
-  voiceText,
 }: AnalysisProps) {
   return (
     <div
@@ -105,13 +96,6 @@ export function Analysis({
           </>
         )}
       </div>
-
-      <VoiceAssist
-        isListening={isListening}
-        onToggle={onVoiceToggle}
-        onSpeak={onSpeak}
-        lastText={voiceText}
-      />
     </div>
   );
 }
