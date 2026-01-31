@@ -1,5 +1,6 @@
 import { createRoot } from 'react-dom/client';
 import { ClauseGuardUI } from '../components/ClauseGuardUI';
+import { isRelevantPage } from '../utils/pageDetector';
 
 const CONTAINER_ID = 'clause-guard-extension-root';
 
@@ -14,6 +15,30 @@ function injectStyles(): void {
       0%, 100% { opacity: 0.4; }
       50% { opacity: 1; }
     }
+    @keyframes slideInFromRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    @keyframes slideOutToRight {
+      from {
+        transform: translateX(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
     #${CONTAINER_ID} * {
       box-sizing: border-box;
     }
@@ -22,6 +47,10 @@ function injectStyles(): void {
 }
 
 function injectUI(): void {
+  if (!isRelevantPage()) {
+    return;
+  }
+
   if (document.getElementById(CONTAINER_ID)) {
     return;
   }

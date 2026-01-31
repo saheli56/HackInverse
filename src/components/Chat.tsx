@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageSquare, Send, X, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Sparkles, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { ChatMessage, PresetPrompt, LegalClause } from "../types";
 import { LLMService } from "../services/llmService";
@@ -7,43 +7,45 @@ import { LLMService } from "../services/llmService";
 interface ChatProps {
   llmService: LLMService | null;
   clauses: LegalClause[];
-  isOpen: boolean;
-  onToggle: () => void;
 }
 
 const PRESET_PROMPTS: PresetPrompt[] = [
   {
     id: "1",
-    label: "Summarize risks",
+    label: "Summarize all major risks",
     prompt: "Summarize all the major risks in this document in simple bullet points.",
   },
   {
     id: "2",
-    label: "Hidden fees?",
+    label: "Any hidden fees or automatic charges?",
     prompt: "Are there any hidden fees or automatic charges I should be aware of?",
   },
   {
     id: "3",
-    label: "Can I cancel?",
+    label: "What are the cancellation terms?",
     prompt: "What are the cancellation terms? Will I be charged any penalties for canceling?",
   },
   {
     id: "4",
-    label: "Data usage",
+    label: "How will my data be used?",
     prompt: "How will my personal data be used and shared? Is there anything concerning?",
   },
   {
     id: "5",
-    label: "My rights",
+    label: "What rights am I giving up?",
     prompt: "What legal rights am I giving up by agreeing to this document?",
+  },
+  {
+    id: "6",
+    label: "Can this agreement be changed?",
+    prompt: "Can the company change these terms without my consent? What happens if they do?",
   },
 ];
 
-export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
+export function Chat({ llmService, clauses }: ChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showPresets, setShowPresets] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -52,10 +54,10 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
   }, [messages]);
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isOpen]);
+  }, []);
 
   const getDocumentContext = (): string => {
     if (clauses.length === 0) return "";
@@ -75,7 +77,6 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
-    setShowPresets(false);
 
     try {
       const context = getDocumentContext();
@@ -111,102 +112,43 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
     sendMessage(prompt.prompt);
   };
 
-  if (!isOpen) {
-    return (
-      <button
-        onClick={onToggle}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "8px",
-          width: "100%",
-          padding: "12px",
-          backgroundColor: "#171717",
-          color: "#ffffff",
-          border: "none",
-          borderRadius: "0 0 8px 8px",
-          fontSize: "13px",
-          fontWeight: 500,
-          cursor: "pointer",
-        }}
-      >
-        <MessageSquare size={16} />
-        Ask a Question
-      </button>
-    );
-  }
-
   return (
     <div
       style={{
-        borderTop: "1px solid #e5e5e5",
         display: "flex",
         flexDirection: "column",
-        maxHeight: "400px",
+        height: "100%",
       }}
     >
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 16px",
-          backgroundColor: "#171717",
-          color: "#ffffff",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <MessageSquare size={16} />
-          <span style={{ fontSize: "13px", fontWeight: 500 }}>Chat</span>
-        </div>
-        <button
-          onClick={onToggle}
-          style={{
-            background: "none",
-            border: "none",
-            color: "#ffffff",
-            cursor: "pointer",
-            padding: "4px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <X size={16} />
-        </button>
-      </div>
-
-      <div
-        style={{
           flex: 1,
           overflowY: "auto",
-          padding: "12px 16px",
+          padding: "16px",
           backgroundColor: "#fafafa",
-          minHeight: "200px",
-          maxHeight: "280px",
         }}
       >
-        {messages.length === 0 && showPresets && (
+        {messages.length === 0 && (
           <div>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                marginBottom: "12px",
-                color: "#737373",
-                fontSize: "11px",
+                gap: "8px",
+                marginBottom: "16px",
+                color: "#171717",
               }}
             >
-              <Sparkles size={12} />
-              <span>Quick questions</span>
+              <Sparkles size={16} />
+              <span style={{ fontSize: "13px", fontWeight: 500 }}>
+                Ask me anything about this document
+              </span>
             </div>
             <div
               style={{
                 display: "flex",
-                flexWrap: "wrap",
-                gap: "6px",
+                flexDirection: "column",
+                gap: "8px",
               }}
             >
               {PRESET_PROMPTS.map((preset) => (
@@ -214,13 +156,14 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
                   key={preset.id}
                   onClick={() => handlePresetClick(preset)}
                   style={{
-                    padding: "8px 12px",
+                    padding: "12px 16px",
                     backgroundColor: "#ffffff",
                     border: "1px solid #e5e5e5",
-                    borderRadius: "16px",
-                    fontSize: "12px",
+                    borderRadius: "8px",
+                    fontSize: "13px",
                     color: "#404040",
                     cursor: "pointer",
+                    textAlign: "left",
                     transition: "all 0.15s",
                   }}
                   onMouseEnter={(e) => {
@@ -243,7 +186,7 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
           <div
             key={message.id}
             style={{
-              marginBottom: "12px",
+              marginBottom: "16px",
               display: "flex",
               flexDirection: "column",
               alignItems: message.role === "user" ? "flex-end" : "flex-start",
@@ -251,8 +194,8 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
           >
             <div
               style={{
-                maxWidth: "90%",
-                padding: "10px 14px",
+                maxWidth: "85%",
+                padding: "12px 16px",
                 borderRadius:
                   message.role === "user"
                     ? "16px 16px 4px 16px"
@@ -260,22 +203,18 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
                 backgroundColor: message.role === "user" ? "#171717" : "#ffffff",
                 color: message.role === "user" ? "#ffffff" : "#171717",
                 fontSize: "13px",
-                lineHeight: "1.5",
+                lineHeight: "1.6",
                 border: message.role === "assistant" ? "1px solid #e5e5e5" : "none",
               }}
             >
               {message.role === "assistant" ? (
-                <div
-                  style={{
-                    fontSize: "13px",
-                    lineHeight: "1.6",
-                  }}
-                  className="markdown-content"
-                >
+                <div className="markdown-content">
                   <ReactMarkdown
                     components={{
                       p: ({ children }) => (
-                        <p style={{ margin: "0 0 8px 0" }}>{children}</p>
+                        <p style={{ margin: "0 0 10px 0" }}>
+                          {children}
+                        </p>
                       ),
                       ul: ({ children }) => (
                         <ul
@@ -298,7 +237,7 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
                         </ol>
                       ),
                       li: ({ children }) => (
-                        <li style={{ marginBottom: "4px" }}>{children}</li>
+                        <li style={{ marginBottom: "6px" }}>{children}</li>
                       ),
                       strong: ({ children }) => (
                         <strong style={{ fontWeight: 600 }}>{children}</strong>
@@ -365,12 +304,12 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "8px",
-              padding: "10px 14px",
+              gap: "10px",
+              padding: "12px 16px",
               backgroundColor: "#ffffff",
               border: "1px solid #e5e5e5",
               borderRadius: "16px 16px 16px 4px",
-              maxWidth: "90%",
+              maxWidth: "85%",
             }}
           >
             <div
@@ -393,7 +332,7 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
                 />
               ))}
             </div>
-            <span style={{ fontSize: "12px", color: "#737373" }}>
+            <span style={{ fontSize: "13px", color: "#737373" }}>
               Thinking...
             </span>
           </div>
@@ -402,72 +341,12 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {messages.length > 0 && (
-        <button
-          onClick={() => setShowPresets(!showPresets)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "4px",
-            padding: "6px",
-            backgroundColor: "#f5f5f5",
-            border: "none",
-            borderTop: "1px solid #e5e5e5",
-            fontSize: "11px",
-            color: "#737373",
-            cursor: "pointer",
-          }}
-        >
-          {showPresets ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-          {showPresets ? "Hide suggestions" : "Show suggestions"}
-        </button>
-      )}
-
-      {messages.length > 0 && showPresets && (
-        <div
-          style={{
-            padding: "8px 16px",
-            backgroundColor: "#f9fafb",
-            borderTop: "1px solid #e5e5e5",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "4px",
-            }}
-          >
-            {PRESET_PROMPTS.slice(0, 3).map((preset) => (
-              <button
-                key={preset.id}
-                onClick={() => handlePresetClick(preset)}
-                disabled={isLoading}
-                style={{
-                  padding: "6px 10px",
-                  backgroundColor: "#ffffff",
-                  border: "1px solid #e5e5e5",
-                  borderRadius: "12px",
-                  fontSize: "11px",
-                  color: "#525252",
-                  cursor: isLoading ? "default" : "pointer",
-                  opacity: isLoading ? 0.5 : 1,
-                }}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       <form
         onSubmit={handleSubmit}
         style={{
           display: "flex",
           gap: "8px",
-          padding: "12px 16px",
+          padding: "16px",
           borderTop: "1px solid #e5e5e5",
           backgroundColor: "#ffffff",
         }}
@@ -481,7 +360,7 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
           disabled={isLoading || !llmService}
           style={{
             flex: 1,
-            padding: "10px 14px",
+            padding: "12px 16px",
             border: "1px solid #e5e5e5",
             borderRadius: "8px",
             fontSize: "13px",
@@ -493,7 +372,7 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
           type="submit"
           disabled={isLoading || !input.trim() || !llmService}
           style={{
-            padding: "10px 14px",
+            padding: "12px 16px",
             backgroundColor:
               isLoading || !input.trim() ? "#e5e5e5" : "#171717",
             color: isLoading || !input.trim() ? "#a3a3a3" : "#ffffff",
@@ -505,9 +384,15 @@ export function Chat({ llmService, clauses, isOpen, onToggle }: ChatProps) {
             justifyContent: "center",
           }}
         >
-          <Send size={16} />
+          {isLoading ? (
+            <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+          ) : (
+            <Send size={16} />
+          )}
         </button>
       </form>
     </div>
   );
 }
+
+
