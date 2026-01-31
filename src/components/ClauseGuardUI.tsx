@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Shield, X, FileText } from "lucide-react";
 import { 
   DocumentType, 
   RiskLevel, 
@@ -15,6 +16,7 @@ import { KeyTakeaways } from "./KeyTakeaways";
 import { ClauseList } from "./ClauseList";
 import { SuggestedQuestions } from "./SuggestedQuestions";
 import { VoiceAssist } from "./VoiceAssist";
+import { Chat } from "./Chat";
 
 export function ClauseGuardUI() {
   const [isScanning, setIsScanning] = useState(false);
@@ -28,6 +30,7 @@ export function ClauseGuardUI() {
   const [voiceText, setVoiceText] = useState<string | null>(null);
   const [llmService, setLlmService] = useState<LLMService | null>(null);
   const [isVisible, setIsVisible] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   
   const voiceInterfaceRef = useRef<VoiceInterface | null>(null);
 
@@ -167,16 +170,7 @@ export function ClauseGuardUI() {
           zIndex: 999999,
         }}
       >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth="2"
-        >
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        </svg>
+        <Shield size={20} color="#ffffff" />
       </button>
     );
   }
@@ -218,10 +212,7 @@ export function ClauseGuardUI() {
           zIndex: 1,
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
+        <X size={14} />
       </button>
 
       <Header
@@ -244,6 +235,7 @@ export function ClauseGuardUI() {
               textAlign: "center",
             }}
           >
+            <FileText size={32} color="#d4d4d4" style={{ marginBottom: "12px" }} />
             <p
               style={{
                 margin: 0,
@@ -283,6 +275,13 @@ export function ClauseGuardUI() {
         onToggle={handleVoiceToggle}
         onSpeak={handleSpeak}
         lastText={voiceText}
+      />
+
+      <Chat
+        llmService={llmService}
+        clauses={analysis?.clauses || []}
+        isOpen={isChatOpen}
+        onToggle={() => setIsChatOpen(!isChatOpen)}
       />
     </div>
   );

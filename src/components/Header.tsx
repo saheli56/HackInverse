@@ -1,3 +1,4 @@
+import { Shield, AlertTriangle, AlertCircle, CheckCircle, Loader2, Search } from "lucide-react";
 import { DocumentType, RiskLevel } from "../types";
 
 interface HeaderProps {
@@ -7,14 +8,15 @@ interface HeaderProps {
   onScan: () => void;
 }
 
-const riskStyles: Record<RiskLevel, { bg: string; text: string; label: string }> = {
-  [RiskLevel.HIGH]: { bg: "#fef2f2", text: "#991b1b", label: "High Risk" },
-  [RiskLevel.MEDIUM]: { bg: "#fffbeb", text: "#92400e", label: "Medium Risk" },
-  [RiskLevel.LOW]: { bg: "#f0fdf4", text: "#166534", label: "Low Risk" },
+const riskStyles: Record<RiskLevel, { bg: string; text: string; label: string; Icon: typeof AlertTriangle }> = {
+  [RiskLevel.HIGH]: { bg: "#fef2f2", text: "#991b1b", label: "High Risk", Icon: AlertTriangle },
+  [RiskLevel.MEDIUM]: { bg: "#fffbeb", text: "#92400e", label: "Medium Risk", Icon: AlertCircle },
+  [RiskLevel.LOW]: { bg: "#f0fdf4", text: "#166534", label: "Low Risk", Icon: CheckCircle },
 };
 
 export function Header({ documentType, overallRisk, isScanning, onScan }: HeaderProps) {
   const risk = riskStyles[overallRisk];
+  const RiskIcon = risk.Icon;
 
   return (
     <div
@@ -31,26 +33,29 @@ export function Header({ documentType, overallRisk, isScanning, onScan }: Header
           marginBottom: "12px",
         }}
       >
-        <div>
-          <h3
-            style={{
-              margin: "0 0 4px 0",
-              fontSize: "14px",
-              fontWeight: 600,
-              color: "#171717",
-            }}
-          >
-            ClauseGuard
-          </h3>
-          <p
-            style={{
-              margin: 0,
-              fontSize: "12px",
-              color: "#737373",
-            }}
-          >
-            {documentType}
-          </p>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Shield size={20} color="#171717" />
+          <div>
+            <h3
+              style={{
+                margin: "0 0 4px 0",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#171717",
+              }}
+            >
+              ClauseGuard
+            </h3>
+            <p
+              style={{
+                margin: 0,
+                fontSize: "12px",
+                color: "#737373",
+              }}
+            >
+              {documentType}
+            </p>
+          </div>
         </div>
         <div
           style={{
@@ -60,8 +65,12 @@ export function Header({ documentType, overallRisk, isScanning, onScan }: Header
             color: risk.text,
             fontSize: "11px",
             fontWeight: 500,
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
           }}
         >
+          <RiskIcon size={12} />
           {risk.label}
         </div>
       </div>
@@ -78,9 +87,23 @@ export function Header({ documentType, overallRisk, isScanning, onScan }: Header
           fontSize: "13px",
           fontWeight: 500,
           cursor: isScanning ? "default" : "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
         }}
       >
-        {isScanning ? "Analyzing..." : "Analyze This Page"}
+        {isScanning ? (
+          <>
+            <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+            Analyzing...
+          </>
+        ) : (
+          <>
+            <Search size={14} />
+            Analyze This Page
+          </>
+        )}
       </button>
     </div>
   );

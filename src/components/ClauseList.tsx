@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { ChevronDown, ChevronRight, AlertTriangle, AlertCircle, CheckCircle, Info, Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { LegalClause, RiskLevel, RiskCategory } from "../types";
 
 interface ClauseListProps {
@@ -26,6 +28,12 @@ const riskColors: Record<RiskLevel, string> = {
   [RiskLevel.HIGH]: "#dc2626",
   [RiskLevel.MEDIUM]: "#ea580c",
   [RiskLevel.LOW]: "#65a30d",
+};
+
+const riskIcons: Record<RiskLevel, typeof AlertTriangle> = {
+  [RiskLevel.HIGH]: AlertTriangle,
+  [RiskLevel.MEDIUM]: AlertCircle,
+  [RiskLevel.LOW]: CheckCircle,
 };
 
 function groupClausesByCategory(clauses: LegalClause[]): Record<RiskCategory, LegalClause[]> {
@@ -106,15 +114,22 @@ export function ClauseList({
                 alignItems: "center",
               }}
             >
-              <span
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 500,
-                  color: "#171717",
-                }}
-              >
-                {categoryLabels[category as RiskCategory]}
-              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {expandedCategories.has(category as RiskCategory) ? (
+                  <ChevronDown size={14} color="#525252" />
+                ) : (
+                  <ChevronRight size={14} color="#525252" />
+                )}
+                <span
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 500,
+                    color: "#171717",
+                  }}
+                >
+                  {categoryLabels[category as RiskCategory]}
+                </span>
+              </div>
               <span
                 style={{
                   fontSize: "11px",
@@ -126,7 +141,9 @@ export function ClauseList({
             </button>
             {expandedCategories.has(category as RiskCategory) && (
               <div style={{ padding: "8px" }}>
-                {categoryClauses.map((clause) => (
+                {categoryClauses.map((clause) => {
+                  const RiskIcon = riskIcons[clause.risk];
+                  return (
                   <div
                     key={clause.id}
                     style={{
@@ -145,15 +162,19 @@ export function ClauseList({
                         marginBottom: "6px",
                       }}
                     >
-                      <span
+                      <div
                         style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
                           fontSize: "11px",
                           fontWeight: 500,
                           color: riskColors[clause.risk],
                         }}
                       >
+                        <RiskIcon size={12} />
                         {clause.risk} RISK
-                      </span>
+                      </div>
                     </div>
                     <p
                       style={{
@@ -176,11 +197,22 @@ export function ClauseList({
                         fontSize: "11px",
                         color: "#525252",
                         cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
                       }}
                     >
-                      {isExplaining && expandedClauseId === clause.id
-                        ? "Loading..."
-                        : "Show Details"}
+                      {isExplaining && expandedClauseId === clause.id ? (
+                        <>
+                          <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <Info size={12} />
+                          Show Details
+                        </>
+                      )}
                     </button>
                     {expandedClauseId === clause.id && explanation && (
                       <div
@@ -194,11 +226,36 @@ export function ClauseList({
                           lineHeight: "1.6",
                         }}
                       >
-                        {explanation}
+                        <ReactMarkdown
+                          components={{
+                            p: ({ children }) => (
+                              <p style={{ margin: "0 0 8px 0" }}>{children}</p>
+                            ),
+                            ul: ({ children }) => (
+                              <ul style={{ margin: "8px 0", paddingLeft: "16px" }}>
+                                {children}
+                              </ul>
+                            ),
+                            ol: ({ children }) => (
+                              <ol style={{ margin: "8px 0", paddingLeft: "16px" }}>
+                                {children}
+                              </ol>
+                            ),
+                            li: ({ children }) => (
+                              <li style={{ marginBottom: "4px" }}>{children}</li>
+                            ),
+                            strong: ({ children }) => (
+                              <strong style={{ fontWeight: 600 }}>{children}</strong>
+                            ),
+                          }}
+                        >
+                          {explanation}
+                        </ReactMarkdown>
                       </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

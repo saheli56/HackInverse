@@ -102,3 +102,16 @@ export interface ScanResult {
     lowRisk: number;
   };
 }
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: number;
+}
+
+export interface PresetPrompt {
+  id: string;
+  label: string;
+  prompt: string;
+}
