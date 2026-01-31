@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { copyFileSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync } from 'fs';
 
 export default defineConfig({
   plugins: [
@@ -9,6 +9,9 @@ export default defineConfig({
     {
       name: 'copy-manifest',
       closeBundle() {
+        if (!existsSync('dist')) {
+          mkdirSync('dist', { recursive: true });
+        }
         copyFileSync('manifest.json', 'dist/manifest.json');
       },
     },

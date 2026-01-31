@@ -1,95 +1,128 @@
-import { useState, useEffect } from "react";
-import { LegalClause, RiskLevel, RiskCategory } from "../types";
+import { useState, useEffect, useRef } from "react";
+import { 
+  DocumentType, 
+  RiskLevel, 
+  LegalClause, 
+  DocumentAnalysis,
+  SuggestedQuestion,
+} from "../types";
 import { VoiceInterface } from "../services/voiceInterface";
 import { LLMService } from "../services/llmService";
-import { detectClauses, scanPage } from "../utils/clauseDetector";
+import { analyzeDocument, scanPage } from "../utils/clauseDetector";
 import { getApiKeys } from "../utils/storage";
-import { detectDocumentType, calculateOverallRisk, DocumentType } from "../utils/documentAnalyzer";
-import { extractKeyTakeaways, generateSuggestedQuestions, KeyTakeaway, SuggestedQuestion } from "../utils/keyTakeaways";
+import { Header } from "./Header";
+import { KeyTakeaways } from "./KeyTakeaways";
+import { ClauseList } from "./ClauseList";
+import { SuggestedQuestions } from "./SuggestedQuestions";
+import { VoiceAssist } from "./VoiceAssist";
 
 export function ClauseGuardUI() {
   const [isScanning, setIsScanning] = useState(false);
-  const [clauses, setClauses] = useState<LegalClause[]>([]);
-  const [documentType, setDocumentType] = useState<DocumentType>("Legal Document");
-  const [overallRisk, setOverallRisk] = useState<RiskLevel>(RiskLevel.LOW);
-  const [keyTakeaways, setKeyTakeaways] = useState<KeyTakeaway[]>([]);
-  const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
-  const [expandedClause, setExpandedClause] = useState<string | null>(null);
-  const [clauseExplanations, setClauseExplanations] = useState<Record<string, string>>({});
-  const [llmService, setLlmService] = useState<LLMService | null>(null);
+  const [analysis, setAnalysis] = useState<DocumentAnalysis | null>(null);
+  const [expandedClauseId, setExpandedClauseId] = useState<string | null>(null);
+  const [clauseExplanation, setClauseExplanation] = useState<string | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
+  const [questions, setQuestions] = useState<SuggestedQuestion[]>([]);
+  const [isLoadingAnswer, setIsLoadingAnswer] = useState(false);
   const [isListening, setIsListening] = useState(false);
-
-  const voiceInterface = new VoiceInterface();
+  const [voiceText, setVoiceText] = useState<string | null>(null);
+  const [llmService, setLlmService] = useState<LLMService | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
+  
+  const voiceInterfaceRef = useRef<VoiceInterface | null>(null);
 
   useEffect(() => {
-    const initLLM = async () => {
+    const init = async () => {
       const keys = await getApiKeys();
       setLlmService(new LLMService(keys.groqApiKey, keys.geminiApiKey));
+      voiceInterfaceRef.current = new VoiceInterface();
     };
-    initLLM();
-    performInitialScan();
+    init();
   }, []);
 
-  const performInitialScan = () => {
+  const handleScan = async () => {
     setIsScanning(true);
+    
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    
     const pageText = scanPage();
-    const detectedClauses = detectClauses(pageText);
-    const docType = detectDocumentType();
-    const risk = calculateOverallRisk(detectedClauses);
-    const takeaways = extractKeyTakeaways(detectedClauses);
-    const questions = generateSuggestedQuestions(detectedClauses);
-
-    setClauses(detectedClauses);
-    setDocumentType(docType);
-    setOverallRisk(risk);
-    setKeyTakeaways(takeaways);
-    setSuggestedQuestions(questions);
+    const result = analyzeDocument(pageText);
+    
+    setAnalysis(result);
+    setQuestions(result.questions);
     setIsScanning(false);
   };
 
-  const handleQuestionClick = async (question: SuggestedQuestion) => {
-    const relevantClauses = clauses.filter((c) => c.category === question.category);
-    if (relevantClauses.length > 0 && llmService) {
-      const explanation = await getOrFetchExplanation(relevantClauses[0]);
-      if (explanation) {
-        voiceInterface.speak(explanation);
-      }
-    }
-  };
+  const handleExplainClause = async (clause: LegalClause) => {
+    if (!llmService) return;
 
-  const handleClauseClick = (clauseId: string) => {
-    setExpandedClause(expandedClause === clauseId ? null : clauseId);
-  };
-
-  const getOrFetchExplanation = async (clause: LegalClause): Promise<string | null> => {
-    if (clauseExplanations[clause.id]) {
-      return clauseExplanations[clause.id];
+    if (expandedClauseId === clause.id) {
+      setExpandedClauseId(null);
+      setClauseExplanation(null);
+      return;
     }
 
-    if (!llmService) return null;
+    setExpandedClauseId(clause.id);
+    setIsExplaining(true);
+    setClauseExplanation(null);
 
     try {
       const result = await llmService.explainClause(clause.text);
-      setClauseExplanations((prev) => ({
-        ...prev,
-        [clause.id]: result.explanation,
-      }));
-      return result.explanation;
+      setClauseExplanation(result.explanation);
     } catch (error) {
-      return null;
+      setClauseExplanation("Unable to load explanation. Please try again.");
+    } finally {
+      setIsExplaining(false);
     }
   };
 
-  const toggleVoiceAssistance = () => {
+  const handleAskQuestion = async (question: SuggestedQuestion) => {
+    if (!llmService || !analysis) return;
+
+    const relevantClause = analysis.clauses.find(
+      (c) => c.category === question.category
+    );
+
+    if (!relevantClause) return;
+
+    setIsLoadingAnswer(true);
+
+    try {
+      const result = await llmService.explainClause(
+        `${question.question}\n\nContext: ${relevantClause.text}`
+      );
+      
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === question.id ? { ...q, answer: result.explanation } : q
+        )
+      );
+    } catch (error) {
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q.id === question.id
+            ? { ...q, answer: "Unable to load answer. Please try again." }
+            : q
+        )
+      );
+    } finally {
+      setIsLoadingAnswer(false);
+    }
+  };
+
+  const handleVoiceToggle = () => {
+    if (!voiceInterfaceRef.current) return;
+
     if (isListening) {
-      voiceInterface.stopListening();
+      voiceInterfaceRef.current.stopListening();
       setIsListening(false);
     } else {
       setIsListening(true);
-      voiceInterface.startListening(
+      voiceInterfaceRef.current.startListening(
         (transcript) => {
+          setVoiceText(transcript);
           setIsListening(false);
-          handleVoiceInput(transcript);
+          handleVoiceCommand(transcript);
         },
         () => {
           setIsListening(false);
@@ -98,48 +131,55 @@ export function ClauseGuardUI() {
     }
   };
 
-  const handleVoiceInput = (transcript: string) => {
-    const text = transcript.toLowerCase();
+  const handleVoiceCommand = (text: string) => {
+    const lower = text.toLowerCase();
     
-    if (text.includes("scan") || text.includes("analyze")) {
-      performInitialScan();
-      voiceInterface.speak("Scanning page");
-    } else if (text.includes("takeaway") || text.includes("summary")) {
-      const summary = keyTakeaways.map((t) => t.text).join(". ");
-      voiceInterface.speak(summary || "No key takeaways found");
-    } else {
-      voiceInterface.speak("Try asking about the page summary or tell me to scan the page");
+    if (lower.includes("scan") || lower.includes("analyze")) {
+      handleScan();
+    } else if (lower.includes("read") && analysis) {
+      const summary = analysis.takeaways.map((t) => t.text).join(". ");
+      voiceInterfaceRef.current?.speak(summary);
     }
   };
 
-  const groupClausesByCategory = (): Record<string, LegalClause[]> => {
-    const grouped: Record<string, LegalClause[]> = {};
-    clauses.forEach((clause) => {
-      const category = clause.category;
-      if (!grouped[category]) {
-        grouped[category] = [];
-      }
-      grouped[category].push(clause);
-    });
-    return grouped;
+  const handleSpeak = (text: string) => {
+    voiceInterfaceRef.current?.speak(text);
   };
 
-  const formatCategoryName = (category: RiskCategory): string => {
-    return category.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
-  };
-
-  const getRiskColor = (risk: RiskLevel): string => {
-    switch (risk) {
-      case RiskLevel.HIGH:
-        return "#dc2626";
-      case RiskLevel.MEDIUM:
-        return "#ea580c";
-      case RiskLevel.LOW:
-        return "#65a30d";
-    }
-  };
-
-  const groupedClauses = groupClausesByCategory();
+  if (!isVisible) {
+    return (
+      <button
+        onClick={() => setIsVisible(true)}
+        style={{
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          width: "40px",
+          height: "40px",
+          borderRadius: "8px",
+          backgroundColor: "#171717",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
+          zIndex: 999999,
+        }}
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="2"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      </button>
+    );
+  }
 
   return (
     <div
@@ -152,288 +192,98 @@ export function ClauseGuardUI() {
         backgroundColor: "#ffffff",
         border: "1px solid #e5e5e5",
         borderRadius: "8px",
-        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
+        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         zIndex: 999999,
-        overflowY: "auto",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
-      {isScanning ? (
-        <div style={{ padding: "40px", textAlign: "center", color: "#737373" }}>
-          Analyzing document...
-        </div>
-      ) : (
-        <>
+      <button
+        onClick={() => setIsVisible(false)}
+        style={{
+          position: "absolute",
+          top: "12px",
+          right: "12px",
+          width: "24px",
+          height: "24px",
+          backgroundColor: "transparent",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#737373",
+          zIndex: 1,
+        }}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+
+      <Header
+        documentType={analysis?.documentType || DocumentType.UNKNOWN}
+        overallRisk={analysis?.overallRisk || RiskLevel.LOW}
+        isScanning={isScanning}
+        onScan={handleScan}
+      />
+
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+        }}
+      >
+        {!analysis && !isScanning && (
           <div
             style={{
-              padding: "20px",
-              borderBottom: "1px solid #e5e5e5",
+              padding: "32px 16px",
+              textAlign: "center",
             }}
           >
-            <div
+            <p
               style={{
-                fontSize: "12px",
+                margin: 0,
+                fontSize: "13px",
                 color: "#737373",
-                marginBottom: "4px",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                lineHeight: "1.5",
               }}
             >
-              {documentType}
-            </div>
-            <div
-              style={{
-                fontSize: "16px",
-                fontWeight: 600,
-                color: "#171717",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              Overall Risk:{" "}
-              <span style={{ color: getRiskColor(overallRisk) }}>
-                {overallRisk}
-              </span>
-            </div>
+              Click "Analyze This Page" to scan for risky clauses in the legal document on this page.
+            </p>
           </div>
+        )}
 
-          {keyTakeaways.length > 0 && (
-            <div
-              style={{
-                padding: "20px",
-                borderBottom: "1px solid #e5e5e5",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#171717",
-                  marginBottom: "12px",
-                }}
-              >
-                Key Takeaways
-              </div>
-              <ul
-                style={{
-                  margin: 0,
-                  paddingLeft: "20px",
-                  fontSize: "13px",
-                  color: "#525252",
-                  lineHeight: "1.6",
-                }}
-              >
-                {keyTakeaways.map((takeaway, idx) => (
-                  <li key={idx} style={{ marginBottom: "6px" }}>
-                    {takeaway.text}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {analysis && (
+          <>
+            <KeyTakeaways takeaways={analysis.takeaways} />
 
-          {Object.keys(groupedClauses).length > 0 && (
-            <div
-              style={{
-                padding: "20px",
-                borderBottom: "1px solid #e5e5e5",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#171717",
-                  marginBottom: "12px",
-                }}
-              >
-                Important Clauses
-              </div>
-              {Object.entries(groupedClauses).map(([category, clausesInCategory]) => (
-                <div key={category} style={{ marginBottom: "16px" }}>
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      color: "#404040",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {formatCategoryName(category as RiskCategory)}
-                  </div>
-                  {clausesInCategory.map((clause) => (
-                    <div
-                      key={clause.id}
-                      style={{
-                        marginBottom: "8px",
-                        border: "1px solid #e5e5e5",
-                        borderRadius: "4px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        onClick={() => handleClauseClick(clause.id)}
-                        style={{
-                          padding: "10px",
-                          cursor: "pointer",
-                          backgroundColor: expandedClause === clause.id ? "#fafafa" : "#ffffff",
-                          transition: "background-color 0.2s",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: "11px",
-                            color: getRiskColor(clause.risk),
-                            fontWeight: 600,
-                            marginBottom: "4px",
-                          }}
-                        >
-                          {clause.risk} RISK
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "12px",
-                            color: "#525252",
-                            lineHeight: "1.5",
-                          }}
-                        >
-                          {clause.text.substring(0, 80)}...
-                        </div>
-                      </div>
-                      {expandedClause === clause.id && (
-                        <div
-                          style={{
-                            padding: "12px",
-                            backgroundColor: "#fafafa",
-                            borderTop: "1px solid #e5e5e5",
-                            fontSize: "12px",
-                            color: "#525252",
-                            lineHeight: "1.6",
-                          }}
-                        >
-                          {clauseExplanations[clause.id] ? (
-                            clauseExplanations[clause.id]
-                          ) : (
-                            <div
-                              style={{
-                                padding: "8px",
-                                textAlign: "center",
-                                color: "#737373",
-                              }}
-                            >
-                              <button
-                                onClick={async () => {
-                                  await getOrFetchExplanation(clause);
-                                }}
-                                style={{
-                                  padding: "6px 12px",
-                                  backgroundColor: "#171717",
-                                  color: "#ffffff",
-                                  border: "none",
-                                  borderRadius: "4px",
-                                  fontSize: "11px",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                Get Explanation
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
+            <ClauseList
+              clauses={analysis.clauses}
+              onExplain={handleExplainClause}
+              expandedClauseId={expandedClauseId}
+              explanation={clauseExplanation}
+              isExplaining={isExplaining}
+            />
 
-          {suggestedQuestions.length > 0 && (
-            <div
-              style={{
-                padding: "20px",
-                borderBottom: "1px solid #e5e5e5",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#171717",
-                  marginBottom: "12px",
-                }}
-              >
-                Common Questions
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {suggestedQuestions.map((question, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleQuestionClick(question)}
-                    style={{
-                      padding: "10px 12px",
-                      backgroundColor: "#f5f5f5",
-                      border: "1px solid #e5e5e5",
-                      borderRadius: "4px",
-                      fontSize: "12px",
-                      color: "#171717",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      transition: "background-color 0.2s",
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = "#ececec";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = "#f5f5f5";
-                    }}
-                  >
-                    {question.question}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+            <SuggestedQuestions
+              questions={questions}
+              onAsk={handleAskQuestion}
+              isLoading={isLoadingAnswer}
+            />
+          </>
+        )}
+      </div>
 
-          <div
-            style={{
-              padding: "16px 20px",
-              backgroundColor: "#fafafa",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "11px",
-                color: "#737373",
-                marginBottom: "8px",
-              }}
-            >
-              Voice Assistance (Optional)
-            </div>
-            <button
-              onClick={toggleVoiceAssistance}
-              style={{
-                width: "100%",
-                padding: "10px",
-                backgroundColor: isListening ? "#171717" : "#ffffff",
-                color: isListening ? "#ffffff" : "#171717",
-                border: "1px solid #e5e5e5",
-                borderRadius: "4px",
-                fontSize: "12px",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-              }}
-            >
-              <span>{isListening ? "🎤" : "🎙️"}</span>
-              {isListening ? "Listening..." : "Ask by voice"}
-            </button>
-          </div>
-        </>
-      )}
+      <VoiceAssist
+        isListening={isListening}
+        onToggle={handleVoiceToggle}
+        onSpeak={handleSpeak}
+        lastText={voiceText}
+      />
     </div>
   );
 }

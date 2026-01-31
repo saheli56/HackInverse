@@ -3,12 +3,19 @@ export async function getApiKeys(): Promise<{
   geminiApiKey: string;
 }> {
   return new Promise((resolve) => {
-    chrome.storage.sync.get(["groqApiKey", "geminiApiKey"], (result) => {
-      resolve({
-        groqApiKey: result.groqApiKey || import.meta.env.VITE_GROQ_API_KEY || "",
-        geminiApiKey: result.geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY || "",
+    if (typeof chrome !== "undefined" && chrome.storage) {
+      chrome.storage.sync.get(["groqApiKey", "geminiApiKey"], (result) => {
+        resolve({
+          groqApiKey: result.groqApiKey || import.meta.env.VITE_GROQ_API_KEY || "",
+          geminiApiKey: result.geminiApiKey || import.meta.env.VITE_GEMINI_API_KEY || "",
+        });
       });
-    });
+    } else {
+      resolve({
+        groqApiKey: import.meta.env.VITE_GROQ_API_KEY || "",
+        geminiApiKey: import.meta.env.VITE_GEMINI_API_KEY || "",
+      });
+    }
   });
 }
 
@@ -17,8 +24,12 @@ export async function saveApiKeys(
   geminiApiKey: string
 ): Promise<void> {
   return new Promise((resolve) => {
-    chrome.storage.sync.set({ groqApiKey, geminiApiKey }, () => {
+    if (typeof chrome !== "undefined" && chrome.storage) {
+      chrome.storage.sync.set({ groqApiKey, geminiApiKey }, () => {
+        resolve();
+      });
+    } else {
       resolve();
-    });
+    }
   });
 }

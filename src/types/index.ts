@@ -13,11 +13,22 @@ export enum RiskCategory {
   MODIFICATION = "MODIFICATION",
   WARRANTY = "WARRANTY",
   INDEMNIFICATION = "INDEMNIFICATION",
+  BILLING = "BILLING",
+  CANCELLATION = "CANCELLATION",
+}
+
+export enum DocumentType {
+  TERMS_OF_SERVICE = "Terms of Service",
+  PRIVACY_POLICY = "Privacy Policy",
+  USER_AGREEMENT = "User Agreement",
+  COOKIE_POLICY = "Cookie Policy",
+  UNKNOWN = "Legal Document",
 }
 
 export interface LegalClause {
   id: string;
   text: string;
+  summary: string;
   risk: RiskLevel;
   category: RiskCategory;
   confidence: number;
@@ -25,6 +36,20 @@ export interface LegalClause {
     start: number;
     end: number;
   };
+}
+
+export interface KeyTakeaway {
+  id: string;
+  text: string;
+  risk: RiskLevel;
+  category: RiskCategory;
+}
+
+export interface SuggestedQuestion {
+  id: string;
+  question: string;
+  answer: string;
+  category: RiskCategory;
 }
 
 export interface ClauseExplanation {
@@ -52,6 +77,20 @@ export interface LLMResponse {
   explanation: string;
   risks: string[];
   alternatives: string[];
+}
+
+export interface DocumentAnalysis {
+  documentType: DocumentType;
+  overallRisk: RiskLevel;
+  takeaways: KeyTakeaway[];
+  clauses: LegalClause[];
+  questions: SuggestedQuestion[];
+  summary: {
+    totalClauses: number;
+    highRisk: number;
+    mediumRisk: number;
+    lowRisk: number;
+  };
 }
 
 export interface ScanResult {

@@ -1,27 +1,23 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { ClauseGuardUI } from "../components/ClauseGuardUI";
+import { createRoot } from 'react-dom/client';
+import { ClauseGuardUI } from '../components/ClauseGuardUI';
 
-function injectUI() {
-  const existingRoot = document.getElementById("clauseguard-root");
-  if (existingRoot) {
+const CONTAINER_ID = 'clause-guard-extension-root';
+
+function injectUI(): void {
+  if (document.getElementById(CONTAINER_ID)) {
     return;
   }
 
-  const rootDiv = document.createElement("div");
-  rootDiv.id = "clauseguard-root";
-  document.body.appendChild(rootDiv);
+  const container = document.createElement('div');
+  container.id = CONTAINER_ID;
+  document.body.appendChild(container);
 
-  const root = ReactDOM.createRoot(rootDiv);
-  root.render(
-    <React.StrictMode>
-      <ClauseGuardUI />
-    </React.StrictMode>
-  );
+  const root = createRoot(container);
+  root.render(<ClauseGuardUI />);
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", injectUI);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', injectUI);
 } else {
   injectUI();
 }

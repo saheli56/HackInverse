@@ -1,6 +1,6 @@
 # ClauseGuard
 
-Text-first Chrome extension that analyzes risky legal clauses on web pages and explains them in plain English.
+Voice-first Chrome extension that detects risky legal clauses on web pages and explains them in plain English.
 
 ## Tech Stack
 
@@ -8,10 +8,10 @@ Text-first Chrome extension that analyzes risky legal clauses on web pages and e
 - React
 - Vite
 - Chrome Extension Manifest V3
-- Groq API (llama-3.1-8b)
-- Gemini API (gemini-2.5-flash)
-- Web Speech API (optional voice assistance)
-- SpeechSynthesis API (optional voice output)
+- Groq API (primary LLM)
+- Gemini API (fallback LLM)
+- Web Speech API (voice input)
+- SpeechSynthesis API (voice output)
 
 ## Setup
 
@@ -43,24 +43,18 @@ npm run build
 ## Usage
 
 1. Navigate to any page with terms of service or legal text
-2. The ClauseGuard panel appears in the top-right corner
-3. View the automatic analysis:
-   - Document type and overall risk level
-   - Key takeaways in plain English
-   - Important clauses grouped by category
-   - Common questions with one-click answers
-4. Click any clause to expand and see detailed explanation
-5. Optionally use voice assistance for hands-free interaction
+2. The ClauseGuard UI appears in the top-right corner
+3. Press Ctrl+Space or click the button to activate voice
+4. Say commands like:
+   - "scan page"
+   - "list risks"
+   - "explain clause"
+   - "help"
 
 ## Features
 
-- Automatic page scanning on load
-- Text-first interface (fully usable without voice)
-- Document type detection
-- Overall risk assessment
-- Key takeaways extraction
-- Clause categorization and grouping
-- Expandable clause details with AI explanations
-- Suggested questions based on detected clauses
-- Optional voice assistance for accessibility
+- Deterministic clause detection using pattern matching
+- Voice-first interaction
+- LLM-powered explanations (Groq/Gemini)
+- Risk categorization (HIGH/MEDIUM/LOW)
 - Clean, premium UI design
