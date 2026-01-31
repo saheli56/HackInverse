@@ -7,6 +7,8 @@ import { LLMService } from "../services/llmService";
 interface ChatProps {
   llmService: LLMService | null;
   clauses: LegalClause[];
+  messages: ChatMessage[];
+  onMessagesChange: (messages: ChatMessage[]) => void;
 }
 
 const PRESET_PROMPTS: PresetPrompt[] = [
@@ -48,8 +50,7 @@ const PRESET_PROMPTS: PresetPrompt[] = [
   },
 ];
 
-export function Chat({ llmService, clauses }: ChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+export function Chat({ llmService, clauses, messages, onMessagesChange }: ChatProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -80,7 +81,7 @@ export function Chat({ llmService, clauses }: ChatProps) {
       timestamp: Date.now(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    onMessagesChange([...messages, userMessage]);
     setInput("");
     setIsLoading(true);
 
@@ -95,7 +96,7 @@ export function Chat({ llmService, clauses }: ChatProps) {
         timestamp: Date.now(),
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      onMessagesChange([...messages, userMessage, assistantMessage]);
     } catch (error) {
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -103,7 +104,7 @@ export function Chat({ llmService, clauses }: ChatProps) {
         content: "Sorry, I encountered an error processing your request. Please check that your API keys are configured correctly and try again.",
         timestamp: Date.now(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      onMessagesChange([...messages, userMessage, errorMessage]);
     } finally {
       setIsLoading(false);
     }

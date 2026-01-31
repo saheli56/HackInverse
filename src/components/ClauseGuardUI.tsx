@@ -4,6 +4,7 @@ import {
   LegalClause, 
   DocumentAnalysis,
   SuggestedQuestion,
+  ChatMessage,
 } from "../types";
 import { VoiceInterface } from "../services/voiceInterface";
 import { LLMService } from "../services/llmService";
@@ -29,6 +30,7 @@ export function ClauseGuardUI() {
   const [isOpen, setIsOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("analysis");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   
   const voiceInterfaceRef = useRef<VoiceInterface | null>(null);
 
@@ -430,7 +432,12 @@ export function ClauseGuardUI() {
             voiceText={voiceText}
           />
         ) : (
-          <Chat llmService={llmService} clauses={analysis?.clauses || []} />
+          <Chat 
+            llmService={llmService} 
+            clauses={analysis?.clauses || []} 
+            messages={chatMessages}
+            onMessagesChange={setChatMessages}
+          />
         )}
       </div>
     </div>
