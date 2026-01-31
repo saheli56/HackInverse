@@ -167,11 +167,14 @@ export function ClauseGuardUI() {
           alignItems: "center",
           justifyContent: "center",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-          zIndex: 999999,
+          zIndex: 2147483647,
           animation: "fadeIn 0.3s ease-out",
+          padding: 0,
+          margin: 0,
+          lineHeight: 1,
         }}
       >
-        <Shield size={24} color="#ffffff" />
+        <Shield size={24} color="#ffffff" style={{ display: "block", flexShrink: 0 }} />
       </button>
     );
   }
@@ -194,11 +197,14 @@ export function ClauseGuardUI() {
           alignItems: "center",
           justifyContent: "center",
           boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
-          zIndex: 999999,
+          zIndex: 2147483647,
           animation: "fadeIn 0.3s ease-out",
+          padding: 0,
+          margin: 0,
+          lineHeight: 1,
         }}
       >
-        <Shield size={24} color="#ffffff" />
+        <Shield size={24} color="#ffffff" style={{ display: "block", flexShrink: 0 }} />
       </button>
     );
   }
@@ -216,12 +222,18 @@ export function ClauseGuardUI() {
         border: "1px solid #e5e5e5",
         borderRadius: "12px",
         boxShadow: "0 8px 24px rgba(0, 0, 0, 0.12)",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        zIndex: 999999,
+        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+        zIndex: 2147483647,
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
         animation: "slideInFromRight 0.3s ease-out",
+        margin: 0,
+        padding: 0,
+        fontSize: "14px",
+        lineHeight: 1.5,
+        color: "#171717",
+        textAlign: "left",
       }}
     >
       <div
@@ -231,16 +243,37 @@ export function ClauseGuardUI() {
           justifyContent: "space-between",
           padding: "16px",
           borderBottom: "1px solid #e5e5e5",
+          backgroundColor: "#ffffff",
+          minHeight: "56px",
+          flexShrink: 0,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <Shield size={20} color="#171717" />
+        <div 
+          style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "10px",
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
+          <Shield 
+            size={20} 
+            color="#171717" 
+            style={{
+              display: "block",
+              flexShrink: 0,
+            }}
+          />
           <h2
             style={{
               margin: 0,
+              padding: 0,
               fontSize: "16px",
               fontWeight: 600,
               color: "#171717",
+              lineHeight: "24px",
+              whiteSpace: "nowrap",
             }}
           >
             ClauseGuard
@@ -261,6 +294,10 @@ export function ClauseGuardUI() {
             justifyContent: "center",
             color: "#737373",
             borderRadius: "6px",
+            padding: 0,
+            margin: 0,
+            lineHeight: 1,
+            flexShrink: 0,
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = "#f5f5f5";
@@ -269,7 +306,7 @@ export function ClauseGuardUI() {
             e.currentTarget.style.backgroundColor = "transparent";
           }}
         >
-          <X size={18} />
+          <X size={18} style={{ display: "block", flexShrink: 0 }} />
         </button>
       </div>
 
@@ -278,6 +315,7 @@ export function ClauseGuardUI() {
           display: "flex",
           borderBottom: "1px solid #e5e5e5",
           backgroundColor: "#fafafa",
+          flexShrink: 0,
         }}
       >
         <button
@@ -298,10 +336,13 @@ export function ClauseGuardUI() {
             justifyContent: "center",
             gap: "8px",
             transition: "all 0.2s",
+            margin: 0,
+            lineHeight: "20px",
+            height: "44px",
           }}
         >
-          <FileText size={16} />
-          Analysis
+          <FileText size={16} style={{ display: "block", flexShrink: 0 }} />
+          <span>Analysis</span>
         </button>
         <button
           onClick={() => setActiveTab("chat")}
@@ -321,10 +362,13 @@ export function ClauseGuardUI() {
             justifyContent: "center",
             gap: "8px",
             transition: "all 0.2s",
+            margin: 0,
+            lineHeight: "20px",
+            height: "44px",
           }}
         >
-          <MessageSquare size={16} />
-          Chat
+          <MessageSquare size={16} style={{ display: "block", flexShrink: 0 }} />
+          <span>Chat</span>
         </button>
       </div>
 

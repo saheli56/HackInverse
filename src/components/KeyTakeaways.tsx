@@ -18,16 +18,20 @@ export function KeyTakeaways({ takeaways }: KeyTakeawaysProps) {
       style={{
         padding: "16px",
         borderBottom: "1px solid #e5e5e5",
+        margin: 0,
       }}
     >
       <h4
         style={{
           margin: "0 0 12px 0",
+          padding: 0,
           fontSize: "12px",
           fontWeight: 600,
           color: "#171717",
           textTransform: "uppercase",
           letterSpacing: "0.5px",
+          lineHeight: "16px",
+          height: "auto",
         }}
       >
         Key Takeaways
@@ -47,9 +51,10 @@ export function KeyTakeaways({ takeaways }: KeyTakeawaysProps) {
               alignItems: "flex-start",
               gap: "8px",
               marginBottom: "8px",
+              padding: 0,
               fontSize: "13px",
               color: "#404040",
-              lineHeight: "1.5",
+              lineHeight: "20px",
             }}
           >
             <span
@@ -58,11 +63,12 @@ export function KeyTakeaways({ takeaways }: KeyTakeawaysProps) {
                 height: "6px",
                 borderRadius: "50%",
                 backgroundColor: riskDot[takeaway.risk],
-                marginTop: "6px",
+                marginTop: "7px",
                 flexShrink: 0,
+                display: "block",
               }}
             />
-            {takeaway.text}
+            <span style={{ flex: 1 }}>{takeaway.text}</span>
           </li>
         ))}
       </ul>

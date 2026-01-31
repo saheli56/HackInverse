@@ -23,25 +23,45 @@ export function Header({ documentType, overallRisk, isScanning, onScan }: Header
       style={{
         padding: "16px",
         borderBottom: "1px solid #e5e5e5",
+        backgroundColor: "#ffffff",
       }}
     >
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-start",
+          alignItems: "center",
           marginBottom: "12px",
+          minHeight: "32px",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Shield size={20} color="#171717" />
-          <div>
+        <div 
+          style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "8px",
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
+          <Shield 
+            size={20} 
+            color="#171717" 
+            style={{
+              flexShrink: 0,
+              display: "block",
+            }}
+          />
+          <div style={{ minWidth: 0, flex: 1 }}>
             <h3
               style={{
-                margin: "0 0 4px 0",
+                margin: 0,
+                padding: 0,
                 fontSize: "14px",
                 fontWeight: 600,
                 color: "#171717",
+                lineHeight: "20px",
+                marginBottom: "2px",
               }}
             >
               ClauseGuard
@@ -49,8 +69,13 @@ export function Header({ documentType, overallRisk, isScanning, onScan }: Header
             <p
               style={{
                 margin: 0,
+                padding: 0,
                 fontSize: "12px",
                 color: "#737373",
+                lineHeight: "16px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
               {documentType}
@@ -68,10 +93,20 @@ export function Header({ documentType, overallRisk, isScanning, onScan }: Header
             display: "flex",
             alignItems: "center",
             gap: "4px",
+            flexShrink: 0,
+            marginLeft: "8px",
+            height: "24px",
+            lineHeight: "16px",
           }}
         >
-          <RiskIcon size={12} />
-          {risk.label}
+          <RiskIcon 
+            size={12} 
+            style={{
+              flexShrink: 0,
+              display: "block",
+            }}
+          />
+          <span style={{ whiteSpace: "nowrap" }}>{risk.label}</span>
         </div>
       </div>
       <button
@@ -91,17 +126,32 @@ export function Header({ documentType, overallRisk, isScanning, onScan }: Header
           alignItems: "center",
           justifyContent: "center",
           gap: "8px",
+          lineHeight: "20px",
+          height: "40px",
         }}
       >
         {isScanning ? (
           <>
-            <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
-            Analyzing...
+            <Loader2 
+              size={14} 
+              style={{ 
+                animation: "spin 1s linear infinite",
+                flexShrink: 0,
+                display: "block",
+              }} 
+            />
+            <span>Analyzing...</span>
           </>
         ) : (
           <>
-            <Search size={14} />
-            Analyze This Page
+            <Search 
+              size={14}
+              style={{
+                flexShrink: 0,
+                display: "block",
+              }}
+            />
+            <span>Analyze This Page</span>
           </>
         )}
       </button>

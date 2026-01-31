@@ -30,6 +30,7 @@ export function SuggestedQuestions({ questions, onAsk, isLoading }: SuggestedQue
       style={{
         padding: "16px",
         borderBottom: "1px solid #e5e5e5",
+        margin: 0,
       }}
     >
       <div
@@ -38,25 +39,29 @@ export function SuggestedQuestions({ questions, onAsk, isLoading }: SuggestedQue
           alignItems: "center",
           gap: "6px",
           margin: "0 0 12px 0",
+          padding: 0,
         }}
       >
-        <HelpCircle size={14} color="#171717" />
+        <HelpCircle size={14} color="#171717" style={{ display: "block", flexShrink: 0 }} />
         <h4
           style={{
             margin: 0,
+            padding: 0,
             fontSize: "12px",
             fontWeight: 600,
             color: "#171717",
             textTransform: "uppercase",
             letterSpacing: "0.5px",
+            lineHeight: "16px",
+            height: "auto",
           }}
         >
           Common Questions
         </h4>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", margin: 0, padding: 0 }}>
         {questions.map((q) => (
-          <div key={q.id}>
+          <div key={q.id} style={{ margin: 0, padding: 0 }}>
             <button
               onClick={() => handleClick(q)}
               style={{
@@ -72,6 +77,9 @@ export function SuggestedQuestions({ questions, onAsk, isLoading }: SuggestedQue
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
+                margin: 0,
+                lineHeight: "18px",
+                minHeight: "38px",
               }}
             >
               <ChevronRight 
@@ -80,9 +88,11 @@ export function SuggestedQuestions({ questions, onAsk, isLoading }: SuggestedQue
                 style={{
                   transform: expandedId === q.id ? "rotate(90deg)" : "none",
                   transition: "transform 0.2s",
+                  display: "block",
+                  flexShrink: 0,
                 }}
               />
-              {q.question}
+              <span style={{ flex: 1 }}>{q.question}</span>
             </button>
             {expandedId === q.id && (
               <div
@@ -97,9 +107,9 @@ export function SuggestedQuestions({ questions, onAsk, isLoading }: SuggestedQue
                 }}
               >
                 {isLoading ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
-                    Loading answer...
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", margin: 0, padding: 0 }}>
+                    <Loader2 size={14} style={{ animation: "spin 1s linear infinite", display: "block", flexShrink: 0 }} />
+                    <span>Loading answer...</span>
                   </div>
                 ) : q.answer ? (
                   <ReactMarkdown

@@ -39,8 +39,41 @@ function injectStyles(): void {
       from { opacity: 0; }
       to { opacity: 1; }
     }
+    
     #${CONTAINER_ID} * {
-      box-sizing: border-box;
+      box-sizing: border-box !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+    }
+    
+    #${CONTAINER_ID} {
+      position: fixed !important;
+      z-index: 2147483647 !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+      font-size: 14px !important;
+      line-height: 1.5 !important;
+      color: #171717 !important;
+      text-align: left !important;
+      direction: ltr !important;
+    }
+    
+    #${CONTAINER_ID} button {
+      cursor: pointer !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      -moz-user-select: none !important;
+    }
+    
+    #${CONTAINER_ID} input {
+      outline: none !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+    }
+    
+    #${CONTAINER_ID} svg {
+      display: inline-block !important;
+      vertical-align: middle !important;
+      flex-shrink: 0 !important;
     }
   `;
   document.head.appendChild(style);

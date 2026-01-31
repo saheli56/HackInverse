@@ -77,21 +77,25 @@ export function ClauseList({
       style={{
         padding: "16px",
         borderBottom: "1px solid #e5e5e5",
+        margin: 0,
       }}
     >
       <h4
         style={{
           margin: "0 0 12px 0",
+          padding: 0,
           fontSize: "12px",
           fontWeight: 600,
           color: "#171717",
           textTransform: "uppercase",
           letterSpacing: "0.5px",
+          lineHeight: "16px",
+          height: "auto",
         }}
       >
         Important Clauses
       </h4>
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px", margin: 0, padding: 0 }}>
         {Object.entries(grouped).map(([category, categoryClauses]) => (
           <div
             key={category}
@@ -112,19 +116,23 @@ export function ClauseList({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
+                margin: 0,
+                lineHeight: "20px",
+                minHeight: "40px",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {expandedCategories.has(category as RiskCategory) ? (
-                  <ChevronDown size={14} color="#525252" />
+                  <ChevronDown size={14} color="#525252" style={{ display: "block", flexShrink: 0 }} />
                 ) : (
-                  <ChevronRight size={14} color="#525252" />
+                  <ChevronRight size={14} color="#525252" style={{ display: "block", flexShrink: 0 }} />
                 )}
                 <span
                   style={{
                     fontSize: "12px",
                     fontWeight: 500,
                     color: "#171717",
+                    lineHeight: "20px",
                   }}
                 >
                   {categoryLabels[category as RiskCategory]}
@@ -134,6 +142,7 @@ export function ClauseList({
                 style={{
                   fontSize: "11px",
                   color: "#737373",
+                  lineHeight: "16px",
                 }}
               >
                 {categoryClauses.length} clause{categoryClauses.length > 1 ? "s" : ""}
@@ -170,18 +179,20 @@ export function ClauseList({
                           fontSize: "11px",
                           fontWeight: 500,
                           color: riskColors[clause.risk],
+                          lineHeight: "16px",
                         }}
                       >
-                        <RiskIcon size={12} />
-                        {clause.risk} RISK
+                        <RiskIcon size={12} style={{ display: "block", flexShrink: 0 }} />
+                        <span>{clause.risk} RISK</span>
                       </div>
                     </div>
                     <p
                       style={{
                         margin: "0 0 8px 0",
+                        padding: 0,
                         fontSize: "12px",
                         color: "#404040",
-                        lineHeight: "1.5",
+                        lineHeight: "18px",
                       }}
                     >
                       {clause.summary}
@@ -200,17 +211,20 @@ export function ClauseList({
                         display: "flex",
                         alignItems: "center",
                         gap: "4px",
+                        margin: 0,
+                        lineHeight: "16px",
+                        height: "28px",
                       }}
                     >
                       {isExplaining && expandedClauseId === clause.id ? (
                         <>
-                          <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
-                          Loading...
+                          <Loader2 size={12} style={{ animation: "spin 1s linear infinite", display: "block", flexShrink: 0 }} />
+                          <span>Loading...</span>
                         </>
                       ) : (
                         <>
-                          <Info size={12} />
-                          Show Details
+                          <Info size={12} style={{ display: "block", flexShrink: 0 }} />
+                          <span>Show Details</span>
                         </>
                       )}
                     </button>
