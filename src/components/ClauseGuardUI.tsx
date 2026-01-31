@@ -27,6 +27,7 @@ export function ClauseGuardUI() {
   const [llmService, setLlmService] = useState<LLMService | null>(null);
   const [isVisible, setIsVisible] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("analysis");
   
   const voiceInterfaceRef = useRef<VoiceInterface | null>(null);
@@ -143,7 +144,18 @@ export function ClauseGuardUI() {
   };
 
   const handleSpeak = (text: string) => {
-    voiceInterfaceRef.current?.speak(text);
+    if (voiceInterfaceRef.current) {
+      voiceInterfaceRef.current.speak(text);
+    }
+  };
+
+  const handleClose = () => {
+    setIsClosing(true);
+    // Wait for animation to complete before actually closing
+    setTimeout(() => {
+      setIsOpen(false);
+      setIsClosing(false);
+    }, 300); // Match the animation duration
   };
 
   if (!isVisible) {
@@ -161,12 +173,12 @@ export function ClauseGuardUI() {
           height: "56px",
           borderRadius: "50%",
           backgroundColor: "#171717",
-          border: "2px solid #262626",
+          border: "4px solid #000000",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)",
           zIndex: 2147483647,
           animation: "fadeIn 0.3s ease-out",
           padding: 0,
@@ -191,12 +203,12 @@ export function ClauseGuardUI() {
           height: "56px",
           borderRadius: "50%",
           backgroundColor: "#171717",
-          border: "2px solid #262626",
+          border: "4px solid #000000",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.1)",
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)",
           zIndex: 2147483647,
           animation: "fadeIn 0.3s ease-out",
           padding: 0,
@@ -212,19 +224,22 @@ export function ClauseGuardUI() {
   return (
     <>
       <div
+        onClick={handleClose}
         style={{
           position: "fixed",
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.15)",
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          backdropFilter: "blur(8px)",
           zIndex: 2147483646,
           animation: "fadeIn 0.2s ease-out",
-          pointerEvents: "none",
+          cursor: "pointer",
         }}
       />
       <div
+        onClick={(e) => e.stopPropagation()}
         style={{
           position: "fixed",
           bottom: "24px",
@@ -233,15 +248,15 @@ export function ClauseGuardUI() {
           height: "calc(100vh - 48px)",
           maxHeight: "720px",
           backgroundColor: "#ffffff",
-          border: "2px solid #262626",
+          border: "4px solid #000000",
           borderRadius: "12px",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(0, 0, 0, 0.08)",
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
           zIndex: 2147483647,
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          animation: "slideInFromRight 0.3s ease-out",
+          animation: isClosing ? "slideOutToRight 0.3s ease-in" : "slideInFromRight 0.3s ease-out",
           margin: 0,
           padding: 0,
           fontSize: "14px",
@@ -294,9 +309,7 @@ export function ClauseGuardUI() {
           </h2>
         </div>
         <button
-          onClick={() => {
-            setIsOpen(false);
-          }}
+          onClick={handleClose}
           style={{
             width: "32px",
             height: "32px",
@@ -312,15 +325,20 @@ export function ClauseGuardUI() {
             margin: 0,
             lineHeight: 1,
             flexShrink: 0,
+            transition: "all 0.2s ease",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.backgroundColor = "#f5f5f5";
+            e.currentTarget.style.transform = "scale(1.1) rotate(90deg)";
+            e.currentTarget.style.color = "#171717";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.transform = "scale(1) rotate(0deg)";
+            e.currentTarget.style.color = "#737373";
           }}
         >
-          <X size={18} style={{ display: "block", flexShrink: 0 }} />
+          <X size={18} style={{ display: "block", flexShrink: 0, transition: "transform 0.2s ease" }} />
         </button>
       </div>
 
