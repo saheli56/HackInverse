@@ -1,18 +1,23 @@
 import { useState, useEffect } from "react";
-import { LegalClause, RiskLevel, VoiceIntent, ScanResult } from "../types";
+import { LegalClause, RiskLevel, RiskCategory } from "../types";
 import { VoiceInterface } from "../services/voiceInterface";
 import { LLMService } from "../services/llmService";
 import { detectClauses, scanPage } from "../utils/clauseDetector";
-import { parseVoiceCommand } from "../utils/voiceParser";
 import { getApiKeys } from "../utils/storage";
+import { detectDocumentType, calculateOverallRisk, DocumentType } from "../utils/documentAnalyzer";
+import { extractKeyTakeaways, generateSuggestedQuestions, KeyTakeaway, SuggestedQuestion } from "../utils/keyTakeaways";
 
 export function ClauseGuardUI() {
-  const [isListening, setIsListening] = useState(false);
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
-  const [selectedClause, setSelectedClause] = useState<LegalClause | null>(null);
-  const [explanation, setExplanation] = useState<string>("");
-  const [status, setStatus] = useState<string>("Ready");
+  const [isScanning, setIsScanning] = useState(false);
+  const [clauses, setClauses] = useState<LegalClause[]>([]);
+  const [documentType, setDocumentType] = useState<DocumentType>("Legal Document");
+  const [overallRisk, setOverallRisk] = useState<RiskLevel>(RiskLevel.LOW);
+  const [keyTakeaways, setKeyTakeaways] = useState<KeyTakeaway[]>([]);
+  const [suggestedQuestions, setSuggestedQuestions] = useState<SuggestedQuestion[]>([]);
+  const [expandedClause, setExpandedClause] = useState<string | null>(null);
+  const [clauseExplanations, setClauseExplanations] = useState<Record<string, string>>({});
   const [llmService, setLlmService] = useState<LLMService | null>(null);
+  const [isListening, setIsListening] = useState(false);
 
   const voiceInterface = new VoiceInterface();
 
@@ -22,129 +27,119 @@ export function ClauseGuardUI() {
       setLlmService(new LLMService(keys.groqApiKey, keys.geminiApiKey));
     };
     initLLM();
+    performInitialScan();
   }, []);
 
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === " ") {
-        toggleListening();
+  const performInitialScan = () => {
+    setIsScanning(true);
+    const pageText = scanPage();
+    const detectedClauses = detectClauses(pageText);
+    const docType = detectDocumentType();
+    const risk = calculateOverallRisk(detectedClauses);
+    const takeaways = extractKeyTakeaways(detectedClauses);
+    const questions = generateSuggestedQuestions(detectedClauses);
+
+    setClauses(detectedClauses);
+    setDocumentType(docType);
+    setOverallRisk(risk);
+    setKeyTakeaways(takeaways);
+    setSuggestedQuestions(questions);
+    setIsScanning(false);
+  };
+
+  const handleQuestionClick = async (question: SuggestedQuestion) => {
+    const relevantClauses = clauses.filter((c) => c.category === question.category);
+    if (relevantClauses.length > 0 && llmService) {
+      const explanation = await getOrFetchExplanation(relevantClauses[0]);
+      if (explanation) {
+        voiceInterface.speak(explanation);
       }
-    };
+    }
+  };
 
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [isListening]);
+  const handleClauseClick = (clauseId: string) => {
+    setExpandedClause(expandedClause === clauseId ? null : clauseId);
+  };
 
-  const toggleListening = () => {
+  const getOrFetchExplanation = async (clause: LegalClause): Promise<string | null> => {
+    if (clauseExplanations[clause.id]) {
+      return clauseExplanations[clause.id];
+    }
+
+    if (!llmService) return null;
+
+    try {
+      const result = await llmService.explainClause(clause.text);
+      setClauseExplanations((prev) => ({
+        ...prev,
+        [clause.id]: result.explanation,
+      }));
+      return result.explanation;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const toggleVoiceAssistance = () => {
     if (isListening) {
       voiceInterface.stopListening();
       setIsListening(false);
     } else {
       setIsListening(true);
-      setStatus("Listening...");
-
       voiceInterface.startListening(
-        async (transcript) => {
+        (transcript) => {
           setIsListening(false);
-          setStatus(`Heard: "${transcript}"`);
-          await handleVoiceCommand(transcript);
+          handleVoiceInput(transcript);
         },
-        (error) => {
+        () => {
           setIsListening(false);
-          setStatus(`Error: ${error}`);
         }
       );
     }
   };
 
-  const handleVoiceCommand = async (transcript: string) => {
-    const command = parseVoiceCommand(transcript);
-
-    switch (command.intent) {
-      case VoiceIntent.SCAN_PAGE:
-        await performScan();
-        break;
-      case VoiceIntent.LIST_RISKS:
-        listRisks();
-        break;
-      case VoiceIntent.EXPLAIN_CLAUSE:
-        if (selectedClause) {
-          await explainClause(selectedClause);
-        } else {
-          speak("Please select a clause first");
-        }
-        break;
-      case VoiceIntent.HELP:
-        showHelp();
-        break;
-      default:
-        speak("I didn't understand that. Try saying 'scan page' or 'help'");
-    }
-  };
-
-  const performScan = async () => {
-    setStatus("Scanning page...");
-    const pageText = scanPage();
-    const clauses = detectClauses(pageText);
-
-    const result: ScanResult = {
-      clauses,
-      summary: {
-        totalClauses: clauses.length,
-        highRisk: clauses.filter((c) => c.risk === RiskLevel.HIGH).length,
-        mediumRisk: clauses.filter((c) => c.risk === RiskLevel.MEDIUM).length,
-        lowRisk: clauses.filter((c) => c.risk === RiskLevel.LOW).length,
-      },
-    };
-
-    setScanResult(result);
-    setStatus("Scan complete");
-
-    const message = `Found ${result.summary.totalClauses} clauses. ${result.summary.highRisk} high risk, ${result.summary.mediumRisk} medium risk, ${result.summary.lowRisk} low risk.`;
-    speak(message);
-  };
-
-  const listRisks = () => {
-    if (!scanResult || scanResult.clauses.length === 0) {
-      speak("No scan results. Please scan the page first.");
-      return;
-    }
-
-    const highRisk = scanResult.clauses.filter((c) => c.risk === RiskLevel.HIGH);
-    if (highRisk.length === 0) {
-      speak("No high-risk clauses found.");
+  const handleVoiceInput = (transcript: string) => {
+    const text = transcript.toLowerCase();
+    
+    if (text.includes("scan") || text.includes("analyze")) {
+      performInitialScan();
+      voiceInterface.speak("Scanning page");
+    } else if (text.includes("takeaway") || text.includes("summary")) {
+      const summary = keyTakeaways.map((t) => t.text).join(". ");
+      voiceInterface.speak(summary || "No key takeaways found");
     } else {
-      speak(`Found ${highRisk.length} high-risk clauses. Showing details.`);
+      voiceInterface.speak("Try asking about the page summary or tell me to scan the page");
     }
   };
 
-  const explainClause = async (clause: LegalClause) => {
-    if (!llmService) {
-      speak("LLM service not initialized");
-      return;
+  const groupClausesByCategory = (): Record<string, LegalClause[]> => {
+    const grouped: Record<string, LegalClause[]> = {};
+    clauses.forEach((clause) => {
+      const category = clause.category;
+      if (!grouped[category]) {
+        grouped[category] = [];
+      }
+      grouped[category].push(clause);
+    });
+    return grouped;
+  };
+
+  const formatCategoryName = (category: RiskCategory): string => {
+    return category.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  const getRiskColor = (risk: RiskLevel): string => {
+    switch (risk) {
+      case RiskLevel.HIGH:
+        return "#dc2626";
+      case RiskLevel.MEDIUM:
+        return "#ea580c";
+      case RiskLevel.LOW:
+        return "#65a30d";
     }
-
-    setStatus("Explaining clause...");
-
-    try {
-      const result = await llmService.explainClause(clause.text);
-      setExplanation(result.explanation);
-      speak(result.explanation);
-      setStatus("Ready");
-    } catch (error) {
-      setStatus("Failed to explain clause");
-      speak("Sorry, I couldn't explain that clause");
-    }
   };
 
-  const showHelp = () => {
-    const helpText = "Say: scan page to analyze, list risks to see dangerous clauses, or explain clause to understand selected text.";
-    speak(helpText);
-  };
-
-  const speak = (text: string) => {
-    voiceInterface.speak(text);
-  };
+  const groupedClauses = groupClausesByCategory();
 
   return (
     <div
@@ -152,146 +147,293 @@ export function ClauseGuardUI() {
         position: "fixed",
         top: "20px",
         right: "20px",
-        width: "360px",
-        backgroundColor: "#fafafa",
+        width: "380px",
+        maxHeight: "calc(100vh - 40px)",
+        backgroundColor: "#ffffff",
         border: "1px solid #e5e5e5",
         borderRadius: "8px",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
+        boxShadow: "0 4px 16px rgba(0, 0, 0, 0.1)",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         zIndex: 999999,
+        overflowY: "auto",
       }}
     >
-      <div
-        style={{
-          padding: "16px",
-          borderBottom: "1px solid #e5e5e5",
-        }}
-      >
-        <h3
-          style={{
-            margin: "0 0 8px 0",
-            fontSize: "14px",
-            fontWeight: 600,
-            color: "#171717",
-          }}
-        >
-          ClauseGuard
-        </h3>
-        <p
-          style={{
-            margin: 0,
-            fontSize: "12px",
-            color: "#737373",
-          }}
-        >
-          {status}
-        </p>
-      </div>
-
-      <div style={{ padding: "16px" }}>
-        <button
-          onClick={toggleListening}
-          style={{
-            width: "100%",
-            padding: "12px",
-            backgroundColor: isListening ? "#171717" : "#f5f5f5",
-            color: isListening ? "#fafafa" : "#171717",
-            border: "1px solid #e5e5e5",
-            borderRadius: "6px",
-            fontSize: "13px",
-            fontWeight: 500,
-            cursor: "pointer",
-            transition: "all 0.2s",
-          }}
-        >
-          {isListening ? "Listening..." : "Press to speak (Ctrl+Space)"}
-        </button>
-
-        {scanResult && (
+      {isScanning ? (
+        <div style={{ padding: "40px", textAlign: "center", color: "#737373" }}>
+          Analyzing document...
+        </div>
+      ) : (
+        <>
           <div
             style={{
-              marginTop: "16px",
-              padding: "12px",
-              backgroundColor: "#ffffff",
-              border: "1px solid #e5e5e5",
-              borderRadius: "6px",
+              padding: "20px",
+              borderBottom: "1px solid #e5e5e5",
             }}
           >
             <div
               style={{
                 fontSize: "12px",
-                color: "#525252",
+                color: "#737373",
+                marginBottom: "4px",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+              }}
+            >
+              {documentType}
+            </div>
+            <div
+              style={{
+                fontSize: "16px",
+                fontWeight: 600,
+                color: "#171717",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              Overall Risk:{" "}
+              <span style={{ color: getRiskColor(overallRisk) }}>
+                {overallRisk}
+              </span>
+            </div>
+          </div>
+
+          {keyTakeaways.length > 0 && (
+            <div
+              style={{
+                padding: "20px",
+                borderBottom: "1px solid #e5e5e5",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#171717",
+                  marginBottom: "12px",
+                }}
+              >
+                Key Takeaways
+              </div>
+              <ul
+                style={{
+                  margin: 0,
+                  paddingLeft: "20px",
+                  fontSize: "13px",
+                  color: "#525252",
+                  lineHeight: "1.6",
+                }}
+              >
+                {keyTakeaways.map((takeaway, idx) => (
+                  <li key={idx} style={{ marginBottom: "6px" }}>
+                    {takeaway.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {Object.keys(groupedClauses).length > 0 && (
+            <div
+              style={{
+                padding: "20px",
+                borderBottom: "1px solid #e5e5e5",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#171717",
+                  marginBottom: "12px",
+                }}
+              >
+                Important Clauses
+              </div>
+              {Object.entries(groupedClauses).map(([category, clausesInCategory]) => (
+                <div key={category} style={{ marginBottom: "16px" }}>
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      color: "#404040",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    {formatCategoryName(category as RiskCategory)}
+                  </div>
+                  {clausesInCategory.map((clause) => (
+                    <div
+                      key={clause.id}
+                      style={{
+                        marginBottom: "8px",
+                        border: "1px solid #e5e5e5",
+                        borderRadius: "4px",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        onClick={() => handleClauseClick(clause.id)}
+                        style={{
+                          padding: "10px",
+                          cursor: "pointer",
+                          backgroundColor: expandedClause === clause.id ? "#fafafa" : "#ffffff",
+                          transition: "background-color 0.2s",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "11px",
+                            color: getRiskColor(clause.risk),
+                            fontWeight: 600,
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {clause.risk} RISK
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "12px",
+                            color: "#525252",
+                            lineHeight: "1.5",
+                          }}
+                        >
+                          {clause.text.substring(0, 80)}...
+                        </div>
+                      </div>
+                      {expandedClause === clause.id && (
+                        <div
+                          style={{
+                            padding: "12px",
+                            backgroundColor: "#fafafa",
+                            borderTop: "1px solid #e5e5e5",
+                            fontSize: "12px",
+                            color: "#525252",
+                            lineHeight: "1.6",
+                          }}
+                        >
+                          {clauseExplanations[clause.id] ? (
+                            clauseExplanations[clause.id]
+                          ) : (
+                            <div
+                              style={{
+                                padding: "8px",
+                                textAlign: "center",
+                                color: "#737373",
+                              }}
+                            >
+                              <button
+                                onClick={async () => {
+                                  await getOrFetchExplanation(clause);
+                                }}
+                                style={{
+                                  padding: "6px 12px",
+                                  backgroundColor: "#171717",
+                                  color: "#ffffff",
+                                  border: "none",
+                                  borderRadius: "4px",
+                                  fontSize: "11px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Get Explanation
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {suggestedQuestions.length > 0 && (
+            <div
+              style={{
+                padding: "20px",
+                borderBottom: "1px solid #e5e5e5",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#171717",
+                  marginBottom: "12px",
+                }}
+              >
+                Common Questions
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {suggestedQuestions.map((question, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleQuestionClick(question)}
+                    style={{
+                      padding: "10px 12px",
+                      backgroundColor: "#f5f5f5",
+                      border: "1px solid #e5e5e5",
+                      borderRadius: "4px",
+                      fontSize: "12px",
+                      color: "#171717",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s",
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.backgroundColor = "#ececec";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.backgroundColor = "#f5f5f5";
+                    }}
+                  >
+                    {question.question}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div
+            style={{
+              padding: "16px 20px",
+              backgroundColor: "#fafafa",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "11px",
+                color: "#737373",
                 marginBottom: "8px",
               }}
             >
-              Found {scanResult.summary.totalClauses} clauses
+              Voice Assistance (Optional)
             </div>
-            <div style={{ display: "flex", gap: "8px", fontSize: "11px" }}>
-              <span style={{ color: "#dc2626" }}>
-                High: {scanResult.summary.highRisk}
-              </span>
-              <span style={{ color: "#ea580c" }}>
-                Med: {scanResult.summary.mediumRisk}
-              </span>
-              <span style={{ color: "#65a30d" }}>
-                Low: {scanResult.summary.lowRisk}
-              </span>
-            </div>
+            <button
+              onClick={toggleVoiceAssistance}
+              style={{
+                width: "100%",
+                padding: "10px",
+                backgroundColor: isListening ? "#171717" : "#ffffff",
+                color: isListening ? "#ffffff" : "#171717",
+                border: "1px solid #e5e5e5",
+                borderRadius: "4px",
+                fontSize: "12px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+              }}
+            >
+              <span>{isListening ? "🎤" : "🎙️"}</span>
+              {isListening ? "Listening..." : "Ask by voice"}
+            </button>
           </div>
-        )}
-
-        {scanResult && scanResult.clauses.length > 0 && (
-          <div style={{ marginTop: "12px", maxHeight: "240px", overflowY: "auto" }}>
-            {scanResult.clauses.slice(0, 5).map((clause) => (
-              <div
-                key={clause.id}
-                onClick={() => setSelectedClause(clause)}
-                style={{
-                  padding: "10px",
-                  marginBottom: "8px",
-                  backgroundColor: selectedClause?.id === clause.id ? "#f5f5f5" : "#ffffff",
-                  border: "1px solid #e5e5e5",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: "11px",
-                  color: "#525252",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: "10px",
-                    fontWeight: 600,
-                    color: clause.risk === RiskLevel.HIGH ? "#dc2626" : clause.risk === RiskLevel.MEDIUM ? "#ea580c" : "#65a30d",
-                    marginBottom: "4px",
-                  }}
-                >
-                  {clause.risk} RISK · {clause.category.replace(/_/g, " ")}
-                </div>
-                <div style={{ lineHeight: "1.4" }}>
-                  {clause.text.substring(0, 100)}...
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {explanation && (
-          <div
-            style={{
-              marginTop: "12px",
-              padding: "12px",
-              backgroundColor: "#ffffff",
-              border: "1px solid #e5e5e5",
-              borderRadius: "6px",
-              fontSize: "12px",
-              color: "#525252",
-              lineHeight: "1.6",
-            }}
-          >
-            {explanation}
-          </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }

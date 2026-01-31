@@ -2,13 +2,14 @@
   "manifest_version": 3,
   "name": "ClauseGuard",
   "version": "1.0.0",
-  "description": "Voice-first legal clause detector",
+  "description": "Text-first legal clause analyzer",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "scripting"
   ],
   "host_permissions": [
-    "https://*/*"
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js"
@@ -20,10 +21,7 @@
       "run_at": "document_idle"
     }
   ],
-  "web_accessible_resources": [
-    {
-      "resources": ["content.js"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  "action": {
+    "default_title": "ClauseGuard"
+  }
 }
