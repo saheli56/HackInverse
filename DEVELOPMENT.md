@@ -14,7 +14,7 @@
    - Manages storage for API keys
    - Routes messages between components
 
-3. **React UI** (`src/components/ClauseGuardUI.tsx`)
+3. **React UI** (`src/components/PlainTermsUI.tsx`)
    - Main user interface
    - Voice interaction controls
    - Displays scan results

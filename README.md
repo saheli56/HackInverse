@@ -1,4 +1,4 @@
-# ClauseGuard
+# PlainTerms
 
 Voice-first Chrome extension that detects risky legal clauses on web pages and explains them in plain English.
 
@@ -43,7 +43,7 @@ npm run build
 ## Usage
 
 1. Navigate to any page with terms of service or legal text
-2. The ClauseGuard UI appears in the top-right corner
+2. The PlainTerms UI appears in the top-right corner
 3. Press Ctrl+Space or click the button to activate voice
 4. Say commands like:
    - "scan page"

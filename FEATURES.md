@@ -1,4 +1,4 @@
-# ClauseGuard - Feature Overview
+# PlainTerms - Feature Overview
 
 ## Core Features
 
@@ -45,7 +45,7 @@
 ```
 src/
 ├── components/
-│   └── ClauseGuardUI.tsx          Main React UI
+│   └── PlainTermsUI.tsx          Main React UI
 ├── services/
 │   ├── voiceInterface.ts          Speech APIs wrapper
 │   └── llmService.ts              Groq/Gemini integration

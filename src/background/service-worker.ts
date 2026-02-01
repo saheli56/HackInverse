@@ -1,5 +1,5 @@
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("ClauseGuard installed");
+  console.log("PlainTerms installed");
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

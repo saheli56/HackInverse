@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client';
-import { ClauseGuardUI } from '../components/ClauseGuardUI';
+import { PlainTermsUI } from '../components/PlainTermsUI';
 import { isRelevantPage } from '../utils/pageDetector';
 
 const CONTAINER_ID = 'clause-guard-extension-root';
@@ -97,7 +97,7 @@ function injectUI(): void {
   document.body.appendChild(container);
 
   const root = createRoot(container);
-  root.render(<ClauseGuardUI />);
+  root.render(<PlainTermsUI />);
 }
 
 if (document.readyState === 'loading') {

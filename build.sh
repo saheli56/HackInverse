@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "Building ClauseGuard..."
+echo "Building PlainTerms..."
 
 rm -rf dist
 

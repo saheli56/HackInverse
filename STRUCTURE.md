@@ -1,4 +1,4 @@
-# ClauseGuard - Complete Project Structure
+# PlainTerms - Complete Project Structure
 
 ```
 -HackInverse/
@@ -64,7 +64,7 @@
 │   │   └── testPage.ts           Test page injection
 │   │
 │   ├── 🎨 components/
-│   │   └── ClauseGuardUI.tsx     Main React component
+│   │   └── PlainTermsUI.tsx     Main React component
 │   │                             - Voice controls
 │   │                             - Scan results display
 │   │                             - Clause selection
@@ -104,7 +104,7 @@
 
 ```
 ┌─────────────────────────────────────────┐
-│         ClauseGuardUI.tsx               │
+│         PlainTermsUI.tsx               │
 │         (Main Component)                │
 └─────────────────┬───────────────────────┘
                   │
@@ -193,7 +193,7 @@ dist/ folder (load in Chrome)
 │  │    (Injected per page)     │   │
 │  │  ┌──────────────────────┐ │   │
 │  │  │  React UI Component  │ │   │
-│  │  │  (ClauseGuardUI)     │ │   │
+│  │  │  (PlainTermsUI)     │ │   │
 │  │  └──────────────────────┘ │   │
 │  └────────────────────────────┘   │
 │             │                      │

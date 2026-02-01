@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "ClauseGuard",
+  "name": "PlainTerms",
   "version": "1.0.0",
   "description": "Voice-first legal clause detector",
   "permissions": [

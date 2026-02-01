@@ -64,7 +64,7 @@ export function Header({ documentType, overallRisk, isScanning, onScan }: Header
                 marginBottom: "2px",
               }}
             >
-              ClauseGuard
+              PlainTerms
             </h3>
             <p
               style={{

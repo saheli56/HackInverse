@@ -13,7 +13,7 @@ export function injectSampleTerms() {
     <h1 style="margin-bottom: 1em;">Terms of Service - Test Page</h1>
     
     <p style="color: #666; font-size: 14px; margin-bottom: 2em;">
-      This is a test page for ClauseGuard. Use Ctrl+Space to activate voice commands.
+      This is a test page for PlainTerms. Use Ctrl+Space to activate voice commands.
     </p>
 
     <h2>1. ACCEPTANCE OF TERMS</h2>

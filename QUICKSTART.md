@@ -90,5 +90,5 @@ npm run build
 
 - Test on real websites (Twitter ToS, Discord ToS, etc.)
 - Customize clause patterns in `src/utils/clauseDetector.ts`
-- Adjust UI styling in `src/components/ClauseGuardUI.tsx`
+- Adjust UI styling in `src/components/PlainTermsUI.tsx`
 - Read DEVELOPMENT.md for architecture details

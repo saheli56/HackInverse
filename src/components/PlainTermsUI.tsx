@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Shield, X, FileText, MessageSquare } from "lucide-react";
-import { 
-  LegalClause, 
+import {
+  LegalClause,
   DocumentAnalysis,
   SuggestedQuestion,
   ChatMessage,
@@ -14,7 +14,7 @@ import { Chat } from "./Chat";
 
 type Tab = "analysis" | "chat";
 
-export function ClauseGuardUI() {
+export function PlainTermsUI() {
   const [isScanning, setIsScanning] = useState(false);
   const [analysis, setAnalysis] = useState<DocumentAnalysis | null>(null);
   const [expandedClauseId, setExpandedClauseId] = useState<string | null>(null);
@@ -39,12 +39,12 @@ export function ClauseGuardUI() {
 
   const handleScan = async () => {
     setIsScanning(true);
-    
+
     await new Promise((resolve) => setTimeout(resolve, 100));
-    
+
     const pageText = scanPage();
     const result = analyzeDocument(pageText);
-    
+
     setAnalysis(result);
     setQuestions(result.questions);
     setIsScanning(false);
@@ -88,7 +88,7 @@ export function ClauseGuardUI() {
       const result = await llmService.explainClause(
         `${question.question}\n\nContext: ${relevantClause.text}`
       );
-      
+
       setQuestions((prev) =>
         prev.map((q) =>
           q.id === question.id ? { ...q, answer: result.explanation } : q
@@ -235,18 +235,18 @@ export function ClauseGuardUI() {
           flexShrink: 0,
         }}
       >
-        <div 
-          style={{ 
-            display: "flex", 
-            alignItems: "center", 
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
             gap: "10px",
             flex: 1,
             minWidth: 0,
           }}
         >
-          <Shield 
-            size={20} 
-            color="#171717" 
+          <Shield
+            size={20}
+            color="#171717"
             style={{
               display: "block",
               flexShrink: 0,
@@ -263,7 +263,7 @@ export function ClauseGuardUI() {
               whiteSpace: "nowrap",
             }}
           >
-            ClauseGuard
+            PlainTerms
           </h2>
         </div>
         <button
@@ -384,9 +384,9 @@ export function ClauseGuardUI() {
             isLoadingAnswer={isLoadingAnswer}
           />
         ) : (
-          <Chat 
-            llmService={llmService} 
-            clauses={analysis?.clauses || []} 
+          <Chat
+            llmService={llmService}
+            clauses={analysis?.clauses || []}
             messages={chatMessages}
             onMessagesChange={setChatMessages}
           />
